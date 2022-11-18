@@ -15,3 +15,14 @@ MeshInfo::MeshInfo() {
 MeshInfo::~MeshInfo() {
 
 }
+
+void MeshInfo::CopyVertices(sModelDrawInfo model) {
+	unsigned int numVertices = model.numberOfVertices;
+	std::vector <glm::vec3> vertices(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		vertices[i].x = model.pVertices[i].x;
+		vertices[i].y = model.pVertices[i].y;
+		vertices[i].z = model.pVertices[i].z;
+	}
+	this->vertices = vertices;
+}

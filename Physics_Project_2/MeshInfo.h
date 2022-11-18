@@ -1,8 +1,13 @@
 #pragma once
 
+#include <vector>
 #include <string>
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
+
+#include "AABB.h"
+#include "Particle.h"
+#include "cVAOManager/cVAOManager.h"
 
 class MeshInfo {
 
@@ -24,5 +29,13 @@ public:
 	float scale;
 	bool isWireframe;
 	bool isVisible;
+	bool drawBBox;
 	bool useRGBAColour;
+
+	BoundingBox boundingBox;
+	Particle* particle;
+
+	std::vector <glm::vec3> vertices;
+
+	void CopyVertices(sModelDrawInfo model);
 };

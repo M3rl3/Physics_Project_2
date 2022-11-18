@@ -142,18 +142,28 @@
     <Text Include="sceneDescription.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AABB.cpp" />
     <ClCompile Include="cShaderManager\cShader.cpp" />
     <ClCompile Include="cShaderManager\cShaderManager.cpp" />
     <ClCompile Include="cVAOManager\cVAOManager.cpp" />
+    <ClCompile Include="DrawBoundingBox.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="LoadModel.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeshInfo.cpp" />
+    <ClCompile Include="Particle.cpp" />
+    <ClCompile Include="ParticleAccelerator.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AABB.h" />
     <ClInclude Include="cShaderManager\cShaderManager.h" />
     <ClInclude Include="cVAOManager\cVAOManager.h" />
+    <ClInclude Include="DrawBoundingBox.h" />
+    <ClInclude Include="LoadModel.h" />
     <ClInclude Include="MeshInfo.h" />
     <ClInclude Include="OpenGL.h" />
+    <ClInclude Include="Particle.h" />
+    <ClInclude Include="ParticleAccelerator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fragmentShader.glsl" />

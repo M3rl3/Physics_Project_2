@@ -6,3 +6,4 @@
 ../assets/meshes/street_lamp.ply
 ../assets/meshes/fight_jet_downscaled.ply
 ../assets/meshes/asteroid_upscaled.ply
+../assets/meshes/bounding_box.ply

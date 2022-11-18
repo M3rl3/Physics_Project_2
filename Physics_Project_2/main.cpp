@@ -1,5 +1,9 @@
 #include "OpenGL.h"
 #include "MeshInfo.h"
+#include "LoadModel.h"
+#include "AABB.h"
+#include "ParticleAccelerator.h"
+#include "DrawBoundingBox.h"
 
 #include <glm/glm.hpp>
 #include <glm/vec4.hpp>
@@ -22,8 +26,12 @@ GLint mvp_location = 0;
 GLuint shaderID = 0;
 
 cVAOManager* VAOMan;
+ParticleAccelerator partAcc;
+
+sModelDrawInfo fighter_plane_obj;
 
 MeshInfo* fighter_plane;
+MeshInfo* bulb_mesh;
 
 unsigned int readIndex = 0;
 int object_index = 0;
@@ -191,12 +199,32 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
         break;
         case FLY_PLANE: {
             if (key == GLFW_KEY_W) {
-                fighter_plane->position.x += 1.f;
-                cameraEye.x += 1.f;
+                //fighter_plane->particle->ApplyForce(glm::vec3(1, 0, 0) * 10.f);
+                fighter_plane->particle->position.x += 1.f;
+                //fighter_plane->position.x += 1.f;
+                //cameraEye.x += 1.f;
             }
             if (key == GLFW_KEY_S) {
-                fighter_plane->position.x -= 1.f;
-                cameraEye.x -= 1.f;
+                //fighter_plane->particle->ApplyForce(glm::vec3(-1, 0, 0) * 10.f);
+                fighter_plane->particle->position.x -= 1.f;
+                //fighter_plane->position.x -= 1.f;
+                //cameraEye.x -= 1.f;
+            }
+            if (key == GLFW_KEY_A) {
+                //fighter_plane->particle->ApplyForce(glm::vec3(0, 0, 1) * 10.f);
+                fighter_plane->particle->position.z += 1.f;
+            }
+            if (key == GLFW_KEY_D) {
+                //fighter_plane->particle->ApplyForce(glm::vec3(0, 0, -1) * 10.f);
+                fighter_plane->particle->position.z -= 1.f;
+            }
+            if (key == GLFW_KEY_Q) {
+                //fighter_plane->particle->ApplyForce(glm::vec3(0, 1, 0) * 10.f);
+                fighter_plane->particle->position.y += 1.f;
+            }
+            if (key == GLFW_KEY_E) {
+                //fighter_plane->particle->ApplyForce(glm::vec3(0, -1, 0) * 10.f);
+                fighter_plane->particle->position.y -= 1.f;
             }
         }
         break;
@@ -223,7 +251,7 @@ void Initialize() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(800, 600, "Mid-Term", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "Physics 2", NULL, NULL);
     if (!window) {
         std::cerr << "Window creation failed." << std::endl;
         glfwTerminate();
@@ -300,7 +328,7 @@ void Render() {
     if (!VAOMan->LoadModelIntoVAO("bulb", bulb, shaderID)) {
         std::cerr << "Could not load model into VAO" << std::endl;
     }
-    MeshInfo* bulb_mesh = new MeshInfo();
+    bulb_mesh = new MeshInfo();
     bulb_mesh->meshName = "bulb";
     bulb_mesh->isWireframe = wireFrame;
     meshArray.push_back(bulb_mesh);
@@ -545,7 +573,7 @@ void Render() {
     lamp_post_mesh11->useRGBAColour = true;
     meshArray.push_back(lamp_post_mesh11);
     
-    sModelDrawInfo fighter_plane_obj;
+    
     LoadModel(meshFiles[6], fighter_plane_obj);
     if (!VAOMan->LoadModelIntoVAO("fighter_plane", fighter_plane_obj, shaderID)) {
         std::cerr << "Could not load model into VAO" << std::endl;
@@ -555,6 +583,7 @@ void Render() {
     fighter_plane->isWireframe = wireFrame;
     fighter_plane->RGBAColour = glm::vec4(25.f, 25.f, 25.f, 1.f);
     fighter_plane->useRGBAColour = true;
+    fighter_plane->drawBBox = true;
     meshArray.push_back(fighter_plane);
     
     sModelDrawInfo asteroid;
@@ -568,9 +597,13 @@ void Render() {
     asteroid_mesh->RGBAColour = glm::vec4(25.f, 25.f, 25.f, 1.f);
     asteroid_mesh->useRGBAColour = true;
     meshArray.push_back(asteroid_mesh);
+    asteroid_mesh->CopyVertices(asteroid);
+    std::cout << asteroid_mesh->vertices[0].x << asteroid_mesh->vertices[0].y << asteroid_mesh->vertices[0].z;
 
     //reads scene descripion files for positioning and other info
-    ReadSceneDescription(); 
+    ReadSceneDescription();
+
+    fighter_plane->particle = partAcc.InitParticle(fighter_plane->position);
 }
 
 void Update() {
@@ -606,7 +639,11 @@ void Update() {
 
     if (theEditMode == FLY_PLANE) {
         cameraTarget = fighter_plane->position;
+        cameraEye = fighter_plane->position - glm::vec3(55.f, -7.f, 0.f);
     }
+    //partAcc.UpdateStep(0.05f);
+    fighter_plane->position = fighter_plane->particle->position;
+    bulb_mesh->position = fighter_plane->position - glm::vec3(75.f, -25.f, 0.f);
 
     for (int i = 0; i < meshArray.size(); i++) {
 
@@ -669,10 +706,18 @@ void Update() {
             glBindVertexArray(0);
         }
         else {
-            std::cerr << "Model not found." << std::endl;
+            std::cout << "Model not found." << std::endl;
+        }
+
+        if (currentMesh->drawBBox) {
+            currentMesh->CopyVertices(fighter_plane_obj);
+            draw_bbox(currentMesh, shaderID, model);
+        }
+        else {
+            currentMesh->drawBBox = false;
         }
     }
-
+    
     glfwSwapBuffers(window);
     glfwPollEvents();
 
@@ -717,137 +762,6 @@ void ReadFromFile() {
     }  
 }
 
-void LoadModel(std::string fileName, sModelDrawInfo& plyModel) {
-
-    struct vertexLayout {
-
-        float x, y, z;
-        float nx, ny, nz;
-        float r, g, b, a;
-        float texture_u, texture_v;
-    };
-
-    struct triangleLayout {
-
-        unsigned int triangleIndices[3];
-    };
-
-    vertexLayout* modelArray = NULL;
-    triangleLayout* triangleArray = NULL;
-
-
-    std::ifstream plyFile(fileName);
-    if (!plyFile.is_open()) {
-        std::cerr << "Could not load file." << std::endl;
-        return;
-    }
-
-    std::string input1;
-
-    // Scan for the word "vertex"
-    while (plyFile >> input1)
-    {
-        if (input1 == "vertex")
-        {
-            break;
-        }
-    }
-
-    plyFile >> plyModel.numberOfVertices;
-
-    // Scan for the word "face"
-    while (plyFile >> input1)
-    {
-        if (input1 == "face")
-        {
-            break;
-        }
-    }
-
-    plyFile >> plyModel.numberOfTriangles;
-
-    // Scan for the word "end_header"
-    while (plyFile >> input1)
-    {
-        if (input1 == "end_header")
-        {
-            break;
-        }
-    }
-    
-    //Vertex Layout
-    modelArray = new vertexLayout[plyModel.numberOfVertices];
-
-    std::cout << "Loading " << fileName << std::endl;
-    for (unsigned int count = 0; count != plyModel.numberOfVertices; count++)
-    {
-        plyFile >> modelArray[count].x;
-        plyFile >> modelArray[count].y;
-        plyFile >> modelArray[count].z;
-
-        plyFile >> modelArray[count].nx;
-        plyFile >> modelArray[count].ny;
-        plyFile >> modelArray[count].nz;
-
-        plyFile >> modelArray[count].r;
-        plyFile >> modelArray[count].g;
-        plyFile >> modelArray[count].b;
-        plyFile >> modelArray[count].a;
-
-        plyFile >> modelArray[count].texture_u;
-        plyFile >> modelArray[count].texture_v;
-        int breakpoint = 1;
-    }
-
-    triangleArray = new triangleLayout[plyModel.numberOfTriangles];
-
-    // Triangle Layout
-    for (unsigned int count = 0; count != plyModel.numberOfTriangles; count++) {
-        unsigned int temp = 0;
-        plyFile >> temp;
-
-        plyFile >> triangleArray[count].triangleIndices[0];
-        plyFile >> triangleArray[count].triangleIndices[1];
-        plyFile >> triangleArray[count].triangleIndices[2];
-        int breakpoint = 1;
-    }
-    plyFile.close();
-
-    plyModel.pVertices = new vertLayout[plyModel.numberOfVertices];
-
-    for (unsigned int index = 0; index != plyModel.numberOfVertices; index++)
-    {
-        plyModel.pVertices[index].x = modelArray[index].x;
-        plyModel.pVertices[index].y = modelArray[index].y;
-        plyModel.pVertices[index].z = modelArray[index].z;
-                                     
-        plyModel.pVertices[index].r = modelArray[index].r;
-        plyModel.pVertices[index].g = modelArray[index].g;
-        plyModel.pVertices[index].b = modelArray[index].b;
-
-        plyModel.pVertices[index].nx = modelArray[index].nx;
-        plyModel.pVertices[index].ny = modelArray[index].ny;
-        plyModel.pVertices[index].nz = modelArray[index].nz;
-    }
-
-    plyModel.numberOfIndices = plyModel.numberOfTriangles * 3;
-    plyModel.pIndices = new unsigned int[plyModel.numberOfIndices];
-
-    unsigned int indexIndices = 0;
-    
-    for (unsigned int triangleIndex = 0; triangleIndex != plyModel.numberOfTriangles; triangleIndex++)
-    {
-        plyModel.pIndices[indexIndices + 0] = triangleArray[triangleIndex].triangleIndices[0];
-        plyModel.pIndices[indexIndices + 1] = triangleArray[triangleIndex].triangleIndices[1];
-        plyModel.pIndices[indexIndices + 2] = triangleArray[triangleIndex].triangleIndices[2];
-
-        indexIndices += 3;
-    }
-    
-    delete [] modelArray;
-    delete [] triangleArray;
-}
-
 void ManageLights() {
     
     GLint PositionLocation = glGetUniformLocation(shaderID, "sLightsArray[0].position");
@@ -858,6 +772,7 @@ void ManageLights() {
     GLint Param1Location = glGetUniformLocation(shaderID, "sLightsArray[0].param1");
     GLint Param2Location = glGetUniformLocation(shaderID, "sLightsArray[0].param2");
 
+    //glm::vec3 lightPosition0 = meshArray[1]->position;
     glm::vec3 lightPosition0 = meshArray[1]->position;
     glUniform4f(PositionLocation, lightPosition0.x, lightPosition0.y, lightPosition0.z, 1.0f);
     //glUniform4f(PositionLocation, 0.f, 0.f, 0.f, 1.0f);
