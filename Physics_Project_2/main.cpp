@@ -585,6 +585,7 @@ void Render() {
     fighter_plane->useRGBAColour = true;
     fighter_plane->drawBBox = true;
     meshArray.push_back(fighter_plane);
+    fighter_plane->CopyVertices(fighter_plane_obj);
     
     sModelDrawInfo asteroid;
     LoadModel(meshFiles[7], asteroid);
@@ -596,9 +597,10 @@ void Render() {
     asteroid_mesh->isWireframe = wireFrame;
     asteroid_mesh->RGBAColour = glm::vec4(25.f, 25.f, 25.f, 1.f);
     asteroid_mesh->useRGBAColour = true;
+    asteroid_mesh->drawBBox = false;
     meshArray.push_back(asteroid_mesh);
     asteroid_mesh->CopyVertices(asteroid);
-    std::cout << asteroid_mesh->vertices[0].x << asteroid_mesh->vertices[0].y << asteroid_mesh->vertices[0].z;
+    
 
     //reads scene descripion files for positioning and other info
     ReadSceneDescription();
@@ -641,6 +643,7 @@ void Update() {
         cameraTarget = fighter_plane->position;
         cameraEye = fighter_plane->position - glm::vec3(55.f, -7.f, 0.f);
     }
+
     //partAcc.UpdateStep(0.05f);
     fighter_plane->position = fighter_plane->particle->position;
     bulb_mesh->position = fighter_plane->position - glm::vec3(75.f, -25.f, 0.f);
@@ -709,8 +712,8 @@ void Update() {
             std::cout << "Model not found." << std::endl;
         }
 
+        // Only draw bounding box around meshes with this boolean value set to true
         if (currentMesh->drawBBox) {
-            currentMesh->CopyVertices(fighter_plane_obj);
             draw_bbox(currentMesh, shaderID, model);
         }
         else {
