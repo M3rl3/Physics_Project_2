@@ -2,12 +2,14 @@
 
 #include "OpenGL.h"
 #include "MeshInfo.h"
+#include "AABB.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// From here https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
+
+// From here: https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
 
 // Takes in the mesh to put the bounding box around, 
 // the compiled shader id, and the model matrix of  
@@ -64,10 +66,16 @@ void draw_bbox(MeshInfo* mesh, unsigned int shaderID, glm::mat4 meshTransform) {
         if (mesh->vertices[i].z < min_z) min_z = mesh->vertices[i].z;
         if (mesh->vertices[i].z > max_z) max_z = mesh->vertices[i].z;
     }
+    //AABB aabb;
+
+   /* aabb.min = glm::vec3(min_x, min_y, min_z);
+    aabb.max = glm::vec3(max_x, max_y, max_z);*/
 
     glm::vec3 size = glm::vec3(max_x - min_x, max_y - min_y, max_z - min_z);
     glm::vec3 center = glm::vec3((min_x + max_x) / 2, (min_y + max_y) / 2, (min_z + max_z) / 2);
     glm::mat4 transform = glm::translate(glm::mat4(1), center) * glm::scale(glm::mat4(1), size);
+
+    //aabb.center = center;
 
     // Uniform location of the model matrix from shader
     GLint modelLocaction = glGetUniformLocation(shaderID, "Model");

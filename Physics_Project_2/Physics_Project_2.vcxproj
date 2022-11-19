@@ -160,6 +160,7 @@
     <ClInclude Include="cShaderManager\cShaderManager.h" />
     <ClInclude Include="cVAOManager\cVAOManager.h" />
     <ClInclude Include="DrawBoundingBox.h" />
+    <ClInclude Include="TestCollision.h" />
     <ClInclude Include="LoadModel.h" />
     <ClInclude Include="MeshInfo.h" />
     <ClInclude Include="OpenGL.h" />

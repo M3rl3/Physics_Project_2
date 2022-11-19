@@ -24,7 +24,6 @@ public:
 	glm::vec3 rotation;
 	glm::vec4 colour;
 	glm::vec4 RGBAColour;
-
 	
 	float scale;
 	bool isWireframe;
@@ -32,7 +31,10 @@ public:
 	bool drawBBox;
 	bool useRGBAColour;
 
-	BoundingBox boundingBox;
+	int nTriangles;
+	int nIndices;
+	int nVertices;
+	//AABB box;
 	Particle* particle;
 
 	std::vector <glm::vec3> vertices;

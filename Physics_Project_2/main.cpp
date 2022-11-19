@@ -4,6 +4,7 @@
 #include "AABB.h"
 #include "ParticleAccelerator.h"
 #include "DrawBoundingBox.h"
+#include "TestCollision.h"
 
 #include <glm/glm.hpp>
 #include <glm/vec4.hpp>
@@ -31,11 +32,15 @@ ParticleAccelerator partAcc;
 sModelDrawInfo fighter_plane_obj;
 
 MeshInfo* fighter_plane;
+MeshInfo* asteroid_mesh;
 MeshInfo* bulb_mesh;
+
+AABB boundingBox;
 
 unsigned int readIndex = 0;
 int object_index = 0;
 float x, y, z, l = 1.f;
+float speed = 0.f;
 
 bool wireFrame = false;
 bool doOnce = true;
@@ -225,6 +230,14 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
             if (key == GLFW_KEY_E) {
                 //fighter_plane->particle->ApplyForce(glm::vec3(0, -1, 0) * 10.f);
                 fighter_plane->particle->position.y -= 1.f;
+            }
+            if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
+                //fighter_plane->particle->ApplyForce(glm::vec3(0, -1, 0) * 10.f);
+                speed += 0.01f;
+            }
+            if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
+                //fighter_plane->particle->ApplyForce(glm::vec3(0, -1, 0) * 10.f);
+                speed -= 0.01f;
             }
         }
         break;
@@ -591,7 +604,7 @@ void Render() {
     if (!VAOMan->LoadModelIntoVAO("asteroid", asteroid, shaderID)) {
         std::cerr << "Could not load model into VAO" << std::endl;
     }
-    MeshInfo* asteroid_mesh = new MeshInfo();
+    asteroid_mesh = new MeshInfo();
     asteroid_mesh->meshName = "asteroid";
     asteroid_mesh->isWireframe = wireFrame;
     asteroid_mesh->RGBAColour = glm::vec4(25.f, 25.f, 25.f, 1.f);
@@ -599,16 +612,57 @@ void Render() {
     asteroid_mesh->drawBBox = false;
     meshArray.push_back(asteroid_mesh);
     asteroid_mesh->CopyIndices(asteroid);
+    asteroid_mesh->nIndices = asteroid.numberOfIndices;
+    asteroid_mesh->nTriangles = asteroid.numberOfTriangles;
     //asteroid_mesh->CopyVertices(asteroid);
 
     /*for (int i = 0; i < asteroid_mesh->indices.size(); i++) {
         std::cout << "( " << asteroid_mesh->indices[i].x << ", " << asteroid_mesh->indices[i].y << ", " << asteroid_mesh->indices[i].z << " )" << std::endl;
     }*/
+    //fighter_plane->boundingBox->center
 
     //reads scene descripion files for positioning and other info
     ReadSceneDescription();
 
     fighter_plane->particle = partAcc.InitParticle(fighter_plane->position);
+    
+    glm::vec3 minPoints = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    glm::vec3 maxPoints = glm::vec3(FLT_MIN, FLT_MIN, FLT_MIN);
+
+    std::vector <glm::vec3> vertices;
+    vertices = fighter_plane->vertices;
+
+    for (int i = 0; i < vertices.size(); i++) {
+        glm::vec3& vertex = vertices[i];
+
+        if (minPoints.x > vertex.x)
+            minPoints.x = vertex.x;
+        if (minPoints.y > vertex.y)
+            minPoints.y = vertex.y;
+        if (minPoints.z > vertex.z)
+            minPoints.z = vertex.z;
+
+        if (maxPoints.x < vertex.x)
+            maxPoints.x = vertex.x;
+        if (maxPoints.y < vertex.y)
+            maxPoints.y = vertex.y;
+        if (maxPoints.z < vertex.z)
+            maxPoints.z = vertex.z;
+    }
+
+    // Calculate the point halfway between the minPoints, and maxPoints
+    glm::vec3 halfExtents = (maxPoints - minPoints) / 2.f;
+    glm::vec3 centerPoint = minPoints + halfExtents;
+
+    /*fighter_plane->box.max = maxPoints;      
+    fighter_plane->box.min = minPoints;      
+    fighter_plane->box.center = centerPoint; 
+    fighter_plane->box.extents = halfExtents;*/
+
+    boundingBox.max = maxPoints;
+    boundingBox.min = minPoints;
+    boundingBox.center = centerPoint;
+    boundingBox.extents = halfExtents;
 }
 
 void Update() {
@@ -647,9 +701,22 @@ void Update() {
         cameraEye = fighter_plane->position - glm::vec3(55.f, -7.f, 0.f);
     }
 
-    //partAcc.UpdateStep(0.05f);
+    //activate thrusters
+    partAcc.UpdateStep(speed);
     fighter_plane->position = fighter_plane->particle->position;
     bulb_mesh->position = fighter_plane->position - glm::vec3(75.f, -25.f, 0.f);
+
+    // Detect Collisions
+    /*unsigned int index = 0;
+    for (int i = 0; i < asteroid_mesh->nIndices;) {
+        Point p0 = asteroid_mesh->indices[i + 0];
+        Point p1 = asteroid_mesh->indices[i + 1];
+        Point p2 = asteroid_mesh->indices[i + 2];
+        if (Intersect(p0, p1, p2, boundingBox) > 0) {
+            std::cout << "Collision!" << std::endl;
+        }
+        i += 3;
+    }*/
 
     for (int i = 0; i < meshArray.size(); i++) {
 
@@ -741,7 +808,7 @@ void Update() {
         std::stringstream ss;
         ss << " Camera: " << "(" << cameraEye.x << ", " << cameraEye.y << ", " << cameraEye.z << ")"
            << " Target: Index = " << object_index << ", MeshName: " << meshArray[object_index]->meshName << ", Position: (" << meshArray[object_index]->position.x << ", " << meshArray[object_index]->position.y << ", " << meshArray[object_index]->position.z << ")"
-           << " FPS: " << frameRate << " ms: " << frameTime << " GPU: " << renderer /*<< " " << l << " Light atten: " << x << ", " << y << ", " << z*/;
+           << " FPS: " << frameRate << " ms: " << frameTime << " Ship dt: " << speed << " GPU: " << renderer /*<< " " << l << " Light atten: " << x << ", " << y << ", " << z*/;
 
         glfwSetWindowTitle(window, ss.str().c_str());
 
