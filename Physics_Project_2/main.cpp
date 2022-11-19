@@ -573,7 +573,6 @@ void Render() {
     lamp_post_mesh11->useRGBAColour = true;
     meshArray.push_back(lamp_post_mesh11);
     
-    
     LoadModel(meshFiles[6], fighter_plane_obj);
     if (!VAOMan->LoadModelIntoVAO("fighter_plane", fighter_plane_obj, shaderID)) {
         std::cerr << "Could not load model into VAO" << std::endl;
@@ -599,8 +598,12 @@ void Render() {
     asteroid_mesh->useRGBAColour = true;
     asteroid_mesh->drawBBox = false;
     meshArray.push_back(asteroid_mesh);
-    asteroid_mesh->CopyVertices(asteroid);
-    
+    asteroid_mesh->CopyIndices(asteroid);
+    //asteroid_mesh->CopyVertices(asteroid);
+
+    /*for (int i = 0; i < asteroid_mesh->indices.size(); i++) {
+        std::cout << "( " << asteroid_mesh->indices[i].x << ", " << asteroid_mesh->indices[i].y << ", " << asteroid_mesh->indices[i].z << " )" << std::endl;
+    }*/
 
     //reads scene descripion files for positioning and other info
     ReadSceneDescription();
@@ -737,8 +740,8 @@ void Update() {
 
         std::stringstream ss;
         ss << " Camera: " << "(" << cameraEye.x << ", " << cameraEye.y << ", " << cameraEye.z << ")"
-            << " Target: Index = " << object_index << ", MeshName: " << meshArray[object_index]->meshName << ", Position: (" << meshArray[object_index]->position.x << ", " << meshArray[object_index]->position.y << ", " << meshArray[object_index]->position.z << ")"
-            << " FPS: " << frameRate << " ms: " << frameTime << " GPU: " << renderer << " " << l << " Light atten: " << x << ", " << y << ", " << z;
+           << " Target: Index = " << object_index << ", MeshName: " << meshArray[object_index]->meshName << ", Position: (" << meshArray[object_index]->position.x << ", " << meshArray[object_index]->position.y << ", " << meshArray[object_index]->position.z << ")"
+           << " FPS: " << frameRate << " ms: " << frameTime << " GPU: " << renderer /*<< " " << l << " Light atten: " << x << ", " << y << ", " << z*/;
 
         glfwSetWindowTitle(window, ss.str().c_str());
 

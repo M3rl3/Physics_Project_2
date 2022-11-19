@@ -71,6 +71,9 @@
     <ClCompile Include="DrawBoundingBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TestCollision.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cShaderManager\cShaderManager.h">

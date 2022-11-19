@@ -101,6 +101,7 @@ void draw_bbox(MeshInfo* mesh, unsigned int shaderID, glm::mat4 meshTransform) {
     glDisableVertexAttribArray(vpos_location);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    // Clean up
     glDeleteBuffers(1, &vbo_vertices);
     glDeleteBuffers(1, &ibo_elements);
 }

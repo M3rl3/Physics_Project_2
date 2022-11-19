@@ -153,6 +153,7 @@
     <ClCompile Include="MeshInfo.cpp" />
     <ClCompile Include="Particle.cpp" />
     <ClCompile Include="ParticleAccelerator.cpp" />
+    <ClCompile Include="TestCollision.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AABB.h" />
