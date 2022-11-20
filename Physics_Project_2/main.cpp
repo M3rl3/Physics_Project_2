@@ -62,7 +62,7 @@ enum eEditMode
 };
 
 glm::vec3 cameraEye; //loaded from external file
-glm::vec3 cameraTarget = glm::vec3(125.0f, 50.0f, 5.0f);
+glm::vec3 cameraTarget = glm::vec3(-75.0f, 2.0f, 0.0f);
 eEditMode theEditMode = MOVING_CAMERA;
 
 float beginTime = 0.f;
@@ -87,10 +87,6 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
     if (key == GLFW_KEY_O && action == GLFW_PRESS)
     {
         theEditMode = MOVING_SELECTED_OBJECT;
-    }
-    if (key == GLFW_KEY_L && action == GLFW_PRESS)
-    {
-        theEditMode = MOVING_LIGHT;
     }
     if (key == GLFW_KEY_F && action == GLFW_PRESS)
     {
@@ -171,6 +167,7 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
                 meshArray[object_index]->position.y += OBJECT_MOVE_SPEED;
             }
 
+            // Cycle through objects in the scene
             if (key == GLFW_KEY_1 && action == GLFW_PRESS)
             {
                 cameraTarget = glm::vec3(0.f, 0.f, 0.f);
@@ -193,52 +190,52 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
             }    
         }
         break;
-        case MOVING_LIGHT: {
-            if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
-                l -= 10.f;
-            }
-            if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
-                l += 10.f;
-            }
-        }
-        break;
         case FLY_PLANE: {
             if (key == GLFW_KEY_W) {
-                //fighter_plane->particle->ApplyForce(glm::vec3(1, 0, 0) * 10.f);
                 fighter_plane->particle->position.x += 1.f;
-                //fighter_plane->position.x += 1.f;
-                //cameraEye.x += 1.f;
             }
             if (key == GLFW_KEY_S) {
-                //fighter_plane->particle->ApplyForce(glm::vec3(-1, 0, 0) * 10.f);
                 fighter_plane->particle->position.x -= 1.f;
-                //fighter_plane->position.x -= 1.f;
-                //cameraEye.x -= 1.f;
             }
             if (key == GLFW_KEY_A) {
-                //fighter_plane->particle->ApplyForce(glm::vec3(0, 0, 1) * 10.f);
                 fighter_plane->particle->position.z += 1.f;
             }
             if (key == GLFW_KEY_D) {
-                //fighter_plane->particle->ApplyForce(glm::vec3(0, 0, -1) * 10.f);
                 fighter_plane->particle->position.z -= 1.f;
             }
             if (key == GLFW_KEY_Q) {
-                //fighter_plane->particle->ApplyForce(glm::vec3(0, 1, 0) * 10.f);
                 fighter_plane->particle->position.y += 1.f;
             }
             if (key == GLFW_KEY_E) {
-                //fighter_plane->particle->ApplyForce(glm::vec3(0, -1, 0) * 10.f);
                 fighter_plane->particle->position.y -= 1.f;
             }
+            // Roatation
+            if (key == GLFW_KEY_UP) {
+                fighter_plane->rotation.x += 1.f;
+            }
+            if (key == GLFW_KEY_DOWN) {
+                fighter_plane->rotation.x -= 1.f;
+            }
+            if (key == GLFW_KEY_LEFT) {
+                fighter_plane->rotation.z += 1.f;
+            }
+            if (key == GLFW_KEY_RIGHT) {
+                fighter_plane->rotation.z -= 1.f;
+            }
+            if (key == GLFW_KEY_PAGE_UP) {
+                fighter_plane->rotation.y += 1.f;
+            }
+            if (key == GLFW_KEY_PAGE_DOWN) {
+                fighter_plane->rotation.y -= 1.f;
+            }
+            // Aircraft Speed
             if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
-                //fighter_plane->particle->ApplyForce(glm::vec3(0, -1, 0) * 10.f);
                 speed += 0.01f;
             }
             if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
-                //fighter_plane->particle->ApplyForce(glm::vec3(0, -1, 0) * 10.f);
                 speed -= 0.01f;
             }
+            // The sky is the limit!
         }
         break;
     }
@@ -609,12 +606,12 @@ void Render() {
     asteroid_mesh->isWireframe = wireFrame;
     asteroid_mesh->RGBAColour = glm::vec4(25.f, 25.f, 25.f, 1.f);
     asteroid_mesh->useRGBAColour = true;
-    asteroid_mesh->drawBBox = false;
+    asteroid_mesh->drawBBox = true;
     meshArray.push_back(asteroid_mesh);
     asteroid_mesh->CopyIndices(asteroid);
+    asteroid_mesh->CopyVertices(asteroid);
     asteroid_mesh->nIndices = asteroid.numberOfIndices;
     asteroid_mesh->nTriangles = asteroid.numberOfTriangles;
-    //asteroid_mesh->CopyVertices(asteroid);
 
     /*for (int i = 0; i < asteroid_mesh->indices.size(); i++) {
         std::cout << "( " << asteroid_mesh->indices[i].x << ", " << asteroid_mesh->indices[i].y << ", " << asteroid_mesh->indices[i].z << " )" << std::endl;
@@ -663,6 +660,7 @@ void Render() {
     boundingBox.min = minPoints;
     boundingBox.center = centerPoint;
     boundingBox.extents = halfExtents;
+    int breakpoint = 1;
 }
 
 void Update() {
@@ -707,16 +705,18 @@ void Update() {
     bulb_mesh->position = fighter_plane->position - glm::vec3(75.f, -25.f, 0.f);
 
     // Detect Collisions
-    /*unsigned int index = 0;
-    for (int i = 0; i < asteroid_mesh->nIndices;) {
-        Point p0 = asteroid_mesh->indices[i + 0];
-        Point p1 = asteroid_mesh->indices[i + 1];
-        Point p2 = asteroid_mesh->indices[i + 2];
-        if (Intersect(p0, p1, p2, boundingBox) > 0) {
+    unsigned int index = 0;
+    for (int i = 0; i < asteroid_mesh->nTriangles;) {
+        Point p0 = asteroid_mesh->indices[static_cast<std::vector<glm::vec3, std::allocator<glm::vec3>>::size_type>(i) + 0];
+        Point p1 = asteroid_mesh->indices[static_cast<std::vector<glm::vec3, std::allocator<glm::vec3>>::size_type>(i) + 1];
+        Point p2 = asteroid_mesh->indices[static_cast<std::vector<glm::vec3, std::allocator<glm::vec3>>::size_type>(i) + 2];
+        
+        int result = Intersect(p0, p1, p2, boundingBox);
+        if (result > 0) {
             std::cout << "Collision!" << std::endl;
         }
         i += 3;
-    }*/
+    }
 
     for (int i = 0; i < meshArray.size(); i++) {
 

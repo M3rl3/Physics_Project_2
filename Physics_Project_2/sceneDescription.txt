@@ -141,11 +141,11 @@ rotation 0.0 67.5 0.0
 scale 1.0
 
 fighter_plane
-position 10.0 40.0 0.0
+position -75.0 2.0 0.0
 rotation 0.0 -67.55 0.0
 scale 1.0
 
 asteroid
-position 125.0 50.0 5.0
-rotation 0.0 10.0 0.0
+position 175.0 70.0 5.0
+rotation 0.0 0.0 0.0
 scale 1.0
