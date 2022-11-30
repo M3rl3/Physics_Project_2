@@ -8,8 +8,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// From here: https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
-
 // Takes in the mesh to put the bounding box around, 
 // the compiled shader id, and the model matrix of  
 // the mesh after all transformations have been applied.
